@@ -35,7 +35,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3RTE2MjE4OTJDOEY0OUEKUldTYTlNaVNHR0xoeHhmM21SK1l5RFV6OTdidVhxT2xFb3daN0YwVm51cndYMEJaSDl4MXBLaGIK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU0QTI2OEI1MDIxNThCQkIKUldTN2l4VUN0V2lpNUJYNlowNjdteW16TUZlSCtzUEZaRWR4L2tERVp1Rm00OHl6MnltVS9XQnEK",
       "endpoints": [
         "https://github.com/zzamjak-cloud/IconMaker/releases/latest/download/latest.json"
       ],

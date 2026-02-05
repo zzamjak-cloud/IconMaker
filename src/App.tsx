@@ -169,7 +169,7 @@ function AppContent() {
           downloading={updater.downloading}
           installing={updater.installing}
           error={updater.error}
-          currentVersion="0.1.0"
+          currentVersion="0.1.1"
           newVersion={updater.update?.version ?? null}
           releaseNotes={updater.update?.body}
           progress={updater.progress}
