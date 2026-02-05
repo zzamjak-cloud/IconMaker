@@ -22,7 +22,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:thatgurjot.com)",
       "Bash(git -C \"D:\\0_Client\\IconMaker\" remote -v)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ]
   }
 }
