@@ -1,0 +1,58 @@
+import { useEffect } from 'react';
+
+interface KeyboardShortcutsOptions {
+  onSearch?: () => void;          // Cmd/Ctrl + K
+  onQuickExport?: () => void;     // Cmd/Ctrl + S
+  onToggleFavorite?: () => void;  // Cmd/Ctrl + F
+}
+
+/**
+ * 키보드 단축키 훅
+ * - Cmd/Ctrl + K: 검색 포커스
+ * - Cmd/Ctrl + S: 빠른 내보내기
+ * - Cmd/Ctrl + F: 즐겨찾기 토글
+ * - ESC: 다이얼로그 닫기 (브라우저 기본)
+ */
+export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // Cmd/Ctrl + K: 검색 포커스
+      if (modKey && e.key === 'k') {
+        e.preventDefault();
+        if (options.onSearch) {
+          options.onSearch();
+        } else {
+          // 기본 동작: 검색 입력 필드 포커스
+          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          }
+        }
+      }
+
+      // Cmd/Ctrl + S: 빠른 내보내기
+      if (modKey && e.key === 's') {
+        e.preventDefault();
+        if (options.onQuickExport) {
+          options.onQuickExport();
+        }
+      }
+
+      // Cmd/Ctrl + F: 즐겨찾기 토글
+      // (브라우저 기본 검색과 충돌하므로 주석 처리)
+      // if (modKey && e.key === 'f') {
+      //   e.preventDefault();
+      //   if (options.onToggleFavorite) {
+      //     options.onToggleFavorite();
+      //   }
+      // }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [options]);
+}
