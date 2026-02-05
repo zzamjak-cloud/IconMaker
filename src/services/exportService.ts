@@ -131,13 +131,13 @@ export class ExportService {
     _color: string
   ): Promise<void> {
     console.log('Canvas PNG conversion started, size:', size);
-    console.log('SVG content preview:', svgContent.substring(0, 200));
+    console.log('SVG preview:', svgContent.substring(0, 200));
 
-    // SVG를 이미지로 로드
+    // SVG를 data URL로 변환 (Blob URL보다 호환성 좋음)
     const img = new Image();
-    const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-    console.log('Created blob URL for SVG');
+    const base64Svg = btoa(unescape(encodeURIComponent(svgContent)));
+    const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
+    console.log('Created data URL for SVG');
 
     await new Promise((resolve, reject) => {
       img.onload = () => {
@@ -146,9 +146,10 @@ export class ExportService {
       };
       img.onerror = (e) => {
         console.error('Image load error:', e);
+        console.error('Failed SVG content:', svgContent);
         reject(new Error('Failed to load SVG as image'));
       };
-      img.src = url;
+      img.src = dataUrl;
     });
 
     // Canvas에 그리기
@@ -164,8 +165,6 @@ export class ExportService {
     // SVG 그리기
     ctx.drawImage(img, 0, 0, size, size);
     console.log('Image drawn to canvas');
-
-    URL.revokeObjectURL(url);
 
     // 픽셀 데이터 확인
     const imageData = ctx.getImageData(0, 0, size, size);
@@ -195,39 +194,29 @@ export class ExportService {
   }
 
   /**
-   * PNG 저장 (Rust 백엔드에서 변환) - 사용 안 함
-   *
-   * 참고: Canvas 방식으로 대체했으나, 향후 Rust 백엔드 방식이 필요할 경우를 위해 주석 처리
-   */
-  // private async _savePng(
-  //   filePath: string,
-  //   svgContent: string,
-  //   size: number
-  // ): Promise<void> {
-  //   // Rust 백엔드에서 PNG 변환
-  //   const pngData = await invoke<number[]>('svg_to_png', {
-  //     svgContent,
-  //     size,
-  //   });
-
-  //   await invoke('save_icon_file', {
-  //     filePath,
-  //     content: pngData,
-  //   });
-  // }
-
-  /**
    * SVG 크기 속성 정규화
    * - "1em" 같은 상대 단위를 제거
    * - viewBox에서 실제 크기를 추출하여 width/height로 설정
+   * - xmlns 속성이 없으면 추가 (이미지 로드에 필수)
    */
   private normalizeSvgSize(svg: string): string {
+    let normalized = svg;
+
+    // xmlns 속성이 없으면 추가 (이미지로 로드할 때 필수)
+    if (!normalized.includes('xmlns=')) {
+      normalized = normalized.replace(
+        /<svg(\s|>)/,
+        '<svg xmlns="http://www.w3.org/2000/svg"$1'
+      );
+      console.log('Added xmlns attribute to SVG');
+    }
+
     // viewBox 추출
-    const viewBoxMatch = svg.match(/viewBox=["']([^"']+)["']/);
+    const viewBoxMatch = normalized.match(/viewBox=["']([^"']+)["']/);
     if (!viewBoxMatch) {
       console.warn('No viewBox found, using default size 24x24');
       // viewBox가 없으면 기본 크기 설정
-      return svg.replace(/<svg([^>]*)>/, '<svg$1 width="24" height="24">');
+      return normalized.replace(/<svg([^>]*)>/, '<svg$1 width="24" height="24">');
     }
 
     // viewBox 형식: "x y width height" (예: "0 0 24 24")
@@ -237,14 +226,17 @@ export class ExportService {
 
     console.log(`Extracted viewBox dimensions: ${width}x${height}`);
 
-    // 기존 width/height 속성 제거하고 viewBox 기반 픽셀 크기로 교체
-    let normalized = svg.replace(/\s*width=["'][^"']*["']/g, '');
-    normalized = normalized.replace(/\s*height=["'][^"']*["']/g, '');
+    // 기존 width/height 속성 제거
+    normalized = normalized.replace(/\s+width=["'][^"']*["']/g, '');
+    normalized = normalized.replace(/\s+height=["'][^"']*["']/g, '');
+
+    // 새 width/height 추가 (공백 포함)
     normalized = normalized.replace(
-      /<svg/,
-      `<svg width="${width}" height="${height}"`
+      /<svg(\s|>)/,
+      `<svg width="${width}" height="${height}"$1`
     );
 
+    console.log('Normalized SVG:', normalized.substring(0, 150));
     return normalized;
   }
 

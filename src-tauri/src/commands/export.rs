@@ -150,12 +150,21 @@ pub async fn save_icon_file(file_path: String, content: Vec<u8>) -> Result<(), S
 /// 색상이 변경된 SVG 문자열
 #[command]
 pub fn change_svg_color(svg_content: String, new_color: String) -> Result<String, String> {
-    // currentColor를 새 색상으로 교체
-    let modified = svg_content
+    // currentColor를 새 색상으로 교체 (속성 형식)
+    let mut modified = svg_content
         .replace(r#"fill="currentColor""#, &format!(r#"fill="{}""#, new_color))
         .replace(r#"fill='currentColor'"#, &format!(r#"fill='{}'"#, new_color))
         .replace(r#"stroke="currentColor""#, &format!(r#"stroke="{}""#, new_color))
         .replace(r#"stroke='currentColor'"#, &format!(r#"stroke='{}'"#, new_color));
+
+    // style 속성 내의 currentColor도 교체
+    // style="fill:currentColor" 또는 style="stroke:currentColor" 형식
+    modified = modified
+        .replace("fill:currentColor", &format!("fill:{}", new_color))
+        .replace("stroke:currentColor", &format!("stroke:{}", new_color));
+
+    // "currentColor" 문자열 자체도 모두 교체 (다른 형식에서 사용될 수 있음)
+    modified = modified.replace("currentColor", &new_color);
 
     Ok(modified)
 }
