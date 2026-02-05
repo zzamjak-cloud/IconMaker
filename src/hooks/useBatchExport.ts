@@ -10,7 +10,7 @@ import { useSettings } from './useSettings';
  * - 에러 처리
  */
 export function useBatchExport() {
-  const { settings, updateSettings } = useSettings();
+  const { settings } = useSettings();
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [errors, setErrors] = useState<string[]>([]);

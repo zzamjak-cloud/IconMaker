@@ -9,7 +9,6 @@ import { useExport } from '@/hooks/useExport';
 import { useSettings } from '@/hooks/useSettings';
 import { useIconDetails } from '@/hooks/useIconDetails';
 import { ExportFormat } from '@/types/export';
-import { cn } from '@/lib/utils';
 
 interface ExportPanelProps {
   iconName: string | null; // "prefix:name" 형식

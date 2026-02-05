@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 import { iconifyApi } from './iconifyApi';
 import { storageService } from './storageService';
-import { ExportOptions, ExportFormat } from '@/types/export';
+import { ExportOptions } from '@/types/export';
 
 /**
  * 아이콘 내보내기 서비스
@@ -129,7 +129,7 @@ export class ExportService {
     filePath: string,
     svgContent: string,
     size: number,
-    color: string
+    _color: string
   ): Promise<void> {
     console.log('Canvas PNG conversion started, size:', size);
     console.log('SVG content preview:', svgContent.substring(0, 200));
@@ -197,23 +197,25 @@ export class ExportService {
 
   /**
    * PNG 저장 (Rust 백엔드에서 변환) - 사용 안 함
+   *
+   * 참고: Canvas 방식으로 대체했으나, 향후 Rust 백엔드 방식이 필요할 경우를 위해 주석 처리
    */
-  private async savePng(
-    filePath: string,
-    svgContent: string,
-    size: number
-  ): Promise<void> {
-    // Rust 백엔드에서 PNG 변환
-    const pngData = await invoke<number[]>('svg_to_png', {
-      svgContent,
-      size,
-    });
+  // private async _savePng(
+  //   filePath: string,
+  //   svgContent: string,
+  //   size: number
+  // ): Promise<void> {
+  //   // Rust 백엔드에서 PNG 변환
+  //   const pngData = await invoke<number[]>('svg_to_png', {
+  //     svgContent,
+  //     size,
+  //   });
 
-    await invoke('save_icon_file', {
-      filePath,
-      content: pngData,
-    });
-  }
+  //   await invoke('save_icon_file', {
+  //     filePath,
+  //     content: pngData,
+  //   });
+  // }
 
   /**
    * SVG 크기 속성 정규화

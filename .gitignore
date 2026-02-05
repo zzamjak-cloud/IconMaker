@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Tauri 서명 키 (절대 커밋 금지)
+src-tauri/*.key

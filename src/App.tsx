@@ -11,6 +11,8 @@ import { Star, Download } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { storageService } from '@/services/storageService';
 import { cn } from '@/lib/utils';
+import { useAutoUpdater } from '@/hooks/useAutoUpdater';
+import { UpdateDialog } from '@/components/UpdateDialog';
 
 // QueryClient 인스턴스 생성
 const queryClient = new QueryClient({
@@ -37,6 +39,9 @@ function AppContent() {
 
   // 즐겨찾기 데이터
   const { favorites } = useFavorites();
+
+  // 자동 업데이트
+  const updater = useAutoUpdater();
 
   // 키보드 단축키
   useKeyboardShortcuts();
@@ -129,6 +134,20 @@ function AppContent() {
           iconNames={favorites}
           isOpen={showBatchExport}
           onClose={() => setShowBatchExport(false)}
+        />
+
+        {/* 업데이트 다이얼로그 */}
+        <UpdateDialog
+          available={updater.available}
+          downloading={updater.downloading}
+          installing={updater.installing}
+          error={updater.error}
+          currentVersion="0.1.0"
+          newVersion={updater.update?.version ?? null}
+          releaseNotes={updater.update?.body}
+          progress={updater.progress}
+          onDownload={updater.downloadAndInstall}
+          onClose={() => {}}
         />
       </div>
     </ToastProvider>

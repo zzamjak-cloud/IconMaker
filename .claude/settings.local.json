@@ -14,7 +14,15 @@
       "Bash(pkill:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(git -C \"D:\\0_Client\\IconMaker\" log --oneline -10)",
+      "Bash(git -C \"D:\\0_Client\\IconMaker\" tag)",
+      "Bash(cat:*)",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:thatgurjot.com)",
+      "Bash(git -C \"D:\\0_Client\\IconMaker\" remote -v)",
+      "Bash(npm run build:*)"
     ]
   }
 }
