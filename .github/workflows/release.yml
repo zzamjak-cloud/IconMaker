@@ -62,7 +62,7 @@ jobs:
             - **macOS**: `.dmg` 파일 (Intel/M1+ 모두 지원)
 
             자세한 변경 사항은 [CHANGELOG](https://github.com/zzamjak-cloud/IconMaker/commits/${{ github.ref_name }})를 참고하세요.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
