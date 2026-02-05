@@ -17,16 +17,20 @@ export function useIconSearch(query: string, options?: Partial<SearchOptions>) {
   // 400ms 디바운싱 적용
   const debouncedQuery = useDebounce(query, 400);
 
+  // 컬렉션이 선택되었지만 검색어가 없는 경우,
+  // 일반적인 검색어를 사용하여 해당 컬렉션의 아이콘들을 가져옴
+  const searchQuery = options?.prefix && !debouncedQuery ? 'icon' : debouncedQuery;
+
   return useQuery({
     queryKey: ['icons', 'search', debouncedQuery, options],
     queryFn: () => iconifyApi.searchIcons({
-      query: debouncedQuery,
+      query: searchQuery,
       limit: options?.limit || 999,
       start: options?.start || 0,
       prefix: options?.prefix,
     }),
-    // 최소 2글자 이상 입력 시에만 검색
-    enabled: debouncedQuery.length >= 2,
+    // 검색어가 2글자 이상이거나, 컬렉션이 선택된 경우 활성화
+    enabled: debouncedQuery.length >= 2 || (!!options?.prefix && debouncedQuery.length === 0),
     // Iconify API는 7일 캐싱하므로 7분 동안 데이터를 신선한 것으로 간주
     staleTime: 1000 * 60 * 7,
     // 30분간 캐시 유지

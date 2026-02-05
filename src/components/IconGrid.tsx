@@ -8,16 +8,17 @@ interface IconGridProps {
   onIconClick?: (iconName: string) => void;
   showOnlyFavorites?: boolean;
   favorites?: string[];
+  columns?: number; // 그리드 컬럼 수 (기본값: 5)
 }
 
 /**
  * 가상화된 아이콘 그리드 컴포넌트
  * - TanStack Virtual을 사용하여 대량의 아이콘을 효율적으로 렌더링
  * - 뷰포트에 보이는 항목만 렌더링하여 성능 최적화
- * - 5열 그리드 레이아웃
+ * - 사용자 정의 가능한 그리드 레이아웃 (5~10열)
  * - 즐겨찾기 필터 지원
  */
-export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [] }: IconGridProps) {
+export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [], columns = 5 }: IconGridProps) {
   const { query, selectedPrefix } = useSearchStore();
 
   // 아이콘 검색
@@ -31,14 +32,14 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
   const displayIcons = showOnlyFavorites ? favorites : (data?.icons || []);
 
   // 그리드 설정
-  const columnCount = 5; // 5열 그리드
+  const columnCount = columns; // 사용자 정의 컬럼 수
   const rowCount = Math.ceil(displayIcons.length / columnCount);
 
   // 가상화 설정
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 280, // 각 행의 예상 높이 (픽셀)
+    estimateSize: () => 140, // 각 행의 예상 높이 (픽셀) - 50% 감소
     overscan: 5, // 뷰포트 외부에 미리 렌더링할 행 수
   });
 
@@ -68,8 +69,8 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
     );
   }
 
-  // 검색어가 너무 짧음
-  if (query.length > 0 && query.length < 2) {
+  // 검색어가 너무 짧음 (컬렉션이 선택되지 않은 경우에만)
+  if (query.length > 0 && query.length < 2 && !selectedPrefix) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">
@@ -85,7 +86,10 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-muted-foreground mb-2">
-            "{query}"에 대한 검색 결과가 없습니다
+            {selectedPrefix
+              ? `선택한 컬렉션에서 "${query}"에 대한 검색 결과가 없습니다`
+              : `"${query}"에 대한 검색 결과가 없습니다`
+            }
           </p>
           <p className="text-sm text-muted-foreground">
             다른 검색어로 시도해보세요
@@ -113,8 +117,8 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
     }
     // 즐겨찾기 목록을 표시 (아래 가상화된 그리드 렌더링 섹션에서 처리)
   }
-  // 초기 상태 (검색 전)
-  else if (!query) {
+  // 초기 상태 (검색 전이고 컬렉션도 선택되지 않음)
+  else if (!query && !selectedPrefix) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center max-w-md">
@@ -126,6 +130,7 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
           </p>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>예시: home, user, settings, arrow, check</p>
+            <p className="mt-2">또는 상단의 카테고리에서 아이콘 세트를 선택하세요</p>
           </div>
         </div>
       </div>
@@ -142,6 +147,8 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
       <div className="mb-4 text-sm text-muted-foreground">
         {showOnlyFavorites ? (
           `즐겨찾기 ${displayIcons.length}개`
+        ) : selectedPrefix && !query ? (
+          `선택한 컬렉션: ${displayIcons.length}개 아이콘`
         ) : (
           `${data?.total}개 결과 중 ${displayIcons.length}개 표시`
         )}
@@ -169,8 +176,10 @@ export function IconGrid({ onIconClick, showOnlyFavorites = false, favorites = [
                 width: '100%',
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                gap: '1rem',
               }}
-              className="grid grid-cols-5 gap-4"
             >
               {rowIcons.map((iconName) => (
                 <IconCard
