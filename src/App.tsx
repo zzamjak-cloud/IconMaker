@@ -5,9 +5,10 @@ import { IconGrid } from '@/components/IconGrid';
 import { ExportPanel } from '@/components/ExportPanel';
 import { BatchExportDialog } from '@/components/BatchExportDialog';
 import { SettingsButton } from '@/components/SettingsDialog';
+import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { ToastProvider } from '@/components/ui/toast';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { Star, Download } from 'lucide-react';
+import { Star, Download, Grid3x3 } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { storageService } from '@/services/storageService';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,9 @@ function AppContent() {
   // 일괄 내보내기 다이얼로그 상태
   const [showBatchExport, setShowBatchExport] = useState(false);
 
+  // Grid 컬럼 수 상태 (5~10)
+  const [gridColumns, setGridColumns] = useState(10);
+
   // 즐겨찾기 데이터
   const { favorites } = useFavorites();
 
@@ -62,7 +66,28 @@ function AppContent() {
               Iconify 아이콘 검색 및 내보내기 도구
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/* 카테고리 드롭다운 */}
+            <CategoryDropdown />
+
+            {/* Grid 컬럼 수 조절 슬라이더 */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50">
+              <Grid3x3 className="w-4 h-4 text-muted-foreground" />
+              <input
+                type="range"
+                min="5"
+                max="10"
+                value={gridColumns}
+                onChange={(e) => setGridColumns(Number(e.target.value))}
+                className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                title={`Grid 컬럼: ${gridColumns}`}
+              />
+              <span className="text-sm font-medium text-muted-foreground min-w-[2ch]">
+                {gridColumns}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
             {/* 즐겨찾기 필터 버튼 */}
             <button
               onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
@@ -103,6 +128,7 @@ function AppContent() {
             )}
 
             <SettingsButton />
+            </div>
           </div>
         </header>
 
@@ -119,6 +145,7 @@ function AppContent() {
               onIconClick={setSelectedIcon}
               showOnlyFavorites={showOnlyFavorites}
               favorites={favorites}
+              columns={gridColumns}
             />
           </div>
         </main>
