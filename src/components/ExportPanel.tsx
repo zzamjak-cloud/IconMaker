@@ -124,7 +124,7 @@ export function ExportPanel({ iconName, onClose }: ExportPanelProps) {
             </Select>
           </div>
 
-          {/* PNG 크기 (PNG 선택 시에만) */}
+          {/* PNG 크기 (PNG 선택 시) */}
           {format === 'png' && (
             <div className="space-y-2">
               <Label>크기 (픽셀)</Label>

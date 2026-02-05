@@ -23,7 +23,21 @@
       "WebFetch(domain:thatgurjot.com)",
       "Bash(git -C \"D:\\0_Client\\IconMaker\" remote -v)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n앱 아이콘 업데이트 및 버전 0.1.1로 업그레이드\n\n- 앱 아이콘 디자인 변경\n- 모든 플랫폼 아이콘 파일 업데이트\n- 버전 0.1.0 → 0.1.1\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nCHANGELOG 업데이트 \\(v0.1.1\\)\n\n- 앱 아이콘 변경 내역 추가\n- 자동 업데이트 관련 기능 추가 내역 기록\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git tag:*)",
+      "Bash(npx tauri:*)",
+      "Bash(printf:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nTauri 서명 키 설정 수정 \\(비밀번호 없는 키 사용\\)\n\n- 비밀번호 없는 새 서명 키 생성\n- GitHub Actions 워크플로우에서 비밀번호 요구사항 제거\n- 공개 키 업데이트\n- 키 설정 가이드 문서 추가\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh run list:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n워크플로우 수정 및 Grid 기본값 변경\n\n- 서명 키 비밀번호 환경 변수 추가 \\(test123\\)\n- Grid 기본 컬럼 수를 10으로 변경\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(xxd:*)",
+      "WebFetch(domain:www.photopea.com)",
+      "Bash(cargo check:*)",
+      "Bash(python3:*)"
     ]
   }
 }

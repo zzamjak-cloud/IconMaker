@@ -59,7 +59,7 @@ export class ExportService {
         console.log('SVG after color change:', svgContent.substring(0, 300));
       }
 
-      // 파일 경로 결정
+      // 파일 경로 결정 (모든 포맷)
       const filePath = await this.getFilePath(exportOptions, settings);
       console.log('File path:', filePath);
       if (!filePath) {
@@ -70,9 +70,8 @@ export class ExportService {
       if (exportOptions.format === 'svg') {
         console.log('Saving as SVG');
         await this.saveSvg(filePath, svgContent);
-      } else {
+      } else if (exportOptions.format === 'png') {
         console.log('Converting to PNG using canvas, size:', exportOptions.size);
-        // Canvas를 사용한 SVG → PNG 변환 (resvg 대신)
         await this.savePngViaCanvas(filePath, svgContent, exportOptions.size, exportOptions.color);
       }
       console.log('Export completed successfully');

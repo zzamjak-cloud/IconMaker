@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "iconmaker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dirs 5.0.1",
  "resvg",
@@ -1659,7 +1659,6 @@ dependencies = [
  "tauri-plugin-store",
  "tauri-plugin-updater",
  "tiny-skia",
- "tokio",
  "usvg",
 ]
 
@@ -4447,9 +4446,7 @@ dependencies = [
  "bytes",
  "libc",
  "mio",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "windows-sys 0.61.2",

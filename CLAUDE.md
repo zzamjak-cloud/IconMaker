@@ -154,9 +154,7 @@ Tauri + React 기반 데스크톱 앱 개발 시 자주 발생하는 문제와 �
 **문제점:**
 
 - Tauri 환경에서 `window.confirm()`과 `window.alert()`는 불안정하게 동작
-
 - 확인 다이얼로그에서 "취소"를 눌러도 코드가 실행되는 경우 발생
-
 - 비동기 작업과 함께 사용 시 타이밍 이슈 발생
 
 **해결 방법: React 커스텀 다이얼로그**
@@ -216,7 +214,6 @@ const confirmDelete = () => {
 **참고 예시:**
 
 - `GamePlanner-Tauri/src/components/Sidebar.tsx`
-
 - `GamePlanner-Tauri/src/components/TemplateManagerModal.tsx`
 
 ---
@@ -282,15 +279,12 @@ useEffect(() => {
 **주의사항:**
 
 - `useEffect` 의존성 배열에 필요한 상태만 포함 (무한 루프 방지)
-
 - `unlisten()` 반드시 클린업에서 호출
-
 - `event.payload.paths`는 항상 배열
 
 **참고 예시:**
 
 - `StyleStudio-Tauri/src/components/generator/ImageUpload.tsx`
-
 - `GamePlanner-Tauri/src/components/ReferenceManager.tsx`
 
 #### 2.2 앱 내부 (요소 재정렬)
@@ -334,7 +328,6 @@ const handleDrop = (e: React.DragEvent, targetIndex: number) => {
 **주의사항:**
 
 - `onDragOver`에서 `e.preventDefault()` 필수
-
 - `setData/getData` 값은 문자열만 가능
 
 #### 2.3 비교 요약
@@ -448,7 +441,6 @@ Tiptap `Mention` extension을 `char: ':'`로 설정하여 구현합니다.
 **참고 예시:**
 
 - `GamePlanner-Tauri/src/lib/emojiData.ts`
-
 - `GamePlanner-Tauri/src/components/TemplateEditorModal.tsx`
 
 ---
@@ -458,23 +450,18 @@ Tiptap `Mention` extension을 `char: ':'`로 설정하여 구현합니다.
 #### 파일 시스템 접근
 
 - Tauri의 `@tauri-apps/plugin-fs` 사용
-
 - 웹 `File API`로는 실제 파일 경로 접근 불가
 
 #### 윈도우 관리
 
 - `@tauri-apps/api/window`의 `getCurrentWindow()` 사용
-
 - 창 크기, 위치, 최소화/최대화 등 제어
 
 #### 설정 저장 (데이터 영속성)
 
 - **필수**: `@tauri-apps/plugin-store` 사용
-
 - `localStorage`는 개발 빌드/재설치 시 삭제될 수 있어 **비권장**
-
 - Tauri Store 저장 위치: `~/Library/Application Support/<bundle-id>/` (macOS)
-
 - `/tauri:setup-store` 명령어로 설정 및 래퍼 훅 생성
 
 ---
@@ -524,27 +511,15 @@ Super Claude가 설치되어 있으며, 작업 상황에 따라 적절한 슬래
 ### 자동 실행 규칙
 
 1. **명시적 요청 우선**: 사용자가 특정 명령어를 직접 요청하면 해당 명령어 사용
-
 2. **작업 컨텍스트 기반**: 작업 성격에 따라 적합한 명령어 자동 선택
-
 3. **연속 작업 지원**: 코드 작성 → `/sc:test`, 문제 발견 → `/sc:troubleshoot`
-
 4. **불필요한 실행 금지**: 단순 질문이나 파일 읽기만 필요한 경우 사용 안 함
 
 ### 명령어 조합 패턴
 
 - **기능 개발**: `/sc:design` → `/sc:implement` → `/sc:test` → `/sc:git`
-
 - **버그 수정**: `/sc:troubleshoot` → `/sc:implement` → `/sc:test`
-
 - **리팩토링**: `/sc:analyze` → `/sc:improve` → `/sc:cleanup` → `/sc:test`
 
 ---
 
-## Notes
-
-- This repository contains multiple experimental projects
-
-- Each project has its own implementation status document in the `Plans/` directory
-
-- Always refer to project-specific documentation before making changes
