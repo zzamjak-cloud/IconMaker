@@ -1,6 +1,22 @@
 import { Store } from '@tauri-apps/plugin-store';
 import { invoke } from '@tauri-apps/api/core';
 import { ExportSettings } from '@/types/export';
+import { SvgWorkspaceData } from '@/types/svgIcon';
+
+// 백업 파일 포맷 버전 (향후 마이그레이션 대비)
+export const SETTINGS_BACKUP_VERSION = 1;
+
+// 전체 설정 백업 구조
+export interface SettingsBackup {
+  version: number;
+  exportedAt: string;
+  data: {
+    favorites: string[];
+    recentSearches: string[];
+    exportSettings: ExportSettings;
+    svgWorkspace: SvgWorkspaceData | null;
+  };
+}
 
 /**
  * Tauri Store를 사용한 데이터 영속성 서비스
@@ -100,6 +116,59 @@ export class StorageService {
   async saveExportSettings(settings: ExportSettings): Promise<void> {
     const store = await this.getStore();
     await store.set('exportSettings', settings);
+    await store.save();
+  }
+
+  /**
+   * SVG 워크스페이스 가져오기
+   * - 저장된 적이 없으면 null 반환 (훅에서 기본값 초기화)
+   */
+  async getSvgWorkspace(): Promise<SvgWorkspaceData | null> {
+    const store = await this.getStore();
+    return (await store.get<SvgWorkspaceData>('svgWorkspace')) ?? null;
+  }
+
+  /**
+   * SVG 워크스페이스 저장
+   */
+  async saveSvgWorkspace(data: SvgWorkspaceData): Promise<void> {
+    const store = await this.getStore();
+    await store.set('svgWorkspace', data);
+    await store.save();
+  }
+
+  /**
+   * 전체 설정을 백업 객체로 수집
+   * - 즐겨찾기, 최근 검색어, 내보내기 설정, SVG 워크스페이스(카테고리·저장 아이콘 포함)
+   */
+  async exportAllSettings(): Promise<SettingsBackup> {
+    const store = await this.getStore();
+    return {
+      version: SETTINGS_BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: {
+        favorites: (await store.get<string[]>('favorites')) || [],
+        recentSearches: (await store.get<string[]>('recentSearches')) || [],
+        exportSettings: await this.getExportSettings(),
+        svgWorkspace: (await store.get<SvgWorkspaceData>('svgWorkspace')) ?? null,
+      },
+    };
+  }
+
+  /**
+   * 백업 객체로부터 전체 설정 복원
+   * - 존재하는 키만 덮어쓰며, 형식이 올바르지 않으면 예외
+   */
+  async importAllSettings(backup: SettingsBackup): Promise<void> {
+    if (!backup || typeof backup !== 'object' || !backup.data) {
+      throw new Error('유효하지 않은 백업 파일입니다.');
+    }
+    const store = await this.getStore();
+    const { favorites, recentSearches, exportSettings, svgWorkspace } = backup.data;
+    if (Array.isArray(favorites)) await store.set('favorites', favorites);
+    if (Array.isArray(recentSearches)) await store.set('recentSearches', recentSearches);
+    if (exportSettings) await store.set('exportSettings', exportSettings);
+    if (svgWorkspace) await store.set('svgWorkspace', svgWorkspace);
     await store.save();
   }
 

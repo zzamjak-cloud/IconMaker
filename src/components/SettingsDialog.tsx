@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Settings, Folder } from 'lucide-react';
-import { open } from '@tauri-apps/plugin-dialog';
+import { Settings, Folder, Download, Upload, AlertTriangle } from 'lucide-react';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { invoke } from '@tauri-apps/api/core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem } from '@/components/ui/select';
 import { useSettings } from '@/hooks/useSettings';
 import { ExportFormat } from '@/types/export';
+import { storageService, SettingsBackup } from '@/services/storageService';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -28,6 +30,11 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
   const [defaultFormat, setDefaultFormat] = useState(settings.format);
   const [defaultSize, setDefaultSize] = useState(settings.size);
   const [defaultColor, setDefaultColor] = useState(settings.color);
+
+  // 백업/복원 상태
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<SettingsBackup | null>(null);
+  const [restoreFileName, setRestoreFileName] = useState('');
 
   // settings가 변경되면 로컬 상태 업데이트
   useEffect(() => {
@@ -68,6 +75,62 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
     setDefaultFormat('png');
     setDefaultSize(128);
     setDefaultColor('#000000');
+  };
+
+  // 전체 설정 백업 파일로 내보내기
+  const handleBackupExport = async () => {
+    setBackupStatus(null);
+    try {
+      const backup = await storageService.exportAllSettings();
+      const dateTag = new Date().toISOString().slice(0, 10);
+      const path = await save({
+        defaultPath: `iconmaker-backup-${dateTag}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        title: '설정 백업 저장',
+      });
+      if (!path) return; // 사용자가 취소
+      // 임의 경로 쓰기는 검증된 Rust 커맨드 재사용 (plugin-fs 스코프 제약 회피)
+      const bytes = Array.from(new TextEncoder().encode(JSON.stringify(backup, null, 2)));
+      await invoke('save_icon_file', { filePath: path, content: bytes });
+      const count = backup.data.svgWorkspace?.icons.length ?? 0;
+      setBackupStatus(`백업을 저장했습니다. (저장 아이콘 ${count}개 포함)`);
+    } catch (error) {
+      setBackupStatus(`백업 실패: ${error}`);
+    }
+  };
+
+  // 복원할 백업 파일 선택 (적용 전 확인 단계)
+  const handlePickRestoreFile = async () => {
+    setBackupStatus(null);
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        title: '복원할 백업 파일 선택',
+      });
+      if (!selected || typeof selected !== 'string') return;
+      const text = await invoke<string>('read_text_file', { filePath: selected });
+      const parsed = JSON.parse(text) as SettingsBackup;
+      if (!parsed || typeof parsed !== 'object' || !parsed.data) {
+        throw new Error('형식이 올바르지 않습니다.');
+      }
+      setPendingRestore(parsed);
+      setRestoreFileName(selected.split(/[\\/]/).pop() || selected);
+    } catch (error) {
+      setBackupStatus(`복원 파일 읽기 실패: ${error}`);
+    }
+  };
+
+  // 복원 적용 → 모든 상태 재로딩을 위해 앱 새로고침
+  const handleConfirmRestore = async () => {
+    if (!pendingRestore) return;
+    try {
+      await storageService.importAllSettings(pendingRestore);
+      window.location.reload();
+    } catch (error) {
+      setBackupStatus(`복원 실패: ${error}`);
+      setPendingRestore(null);
+    }
   };
 
   return (
@@ -158,6 +221,62 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* 구분선 */}
+          <div className="border-t border-border" />
+
+          {/* 백업 및 복원 */}
+          <div className="space-y-3">
+            <h3 className="font-semibold">백업 및 복원</h3>
+            <p className="text-xs text-muted-foreground">
+              즐겨찾기, 내보내기 설정, SVG 워크스페이스(카테고리·저장 아이콘)를 하나의 파일로 백업합니다.
+              설정은 앱 업데이트 후에도 자동 보관되며, 백업 파일로 다른 기기로 옮기거나 복구할 수 있습니다.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={handleBackupExport} variant="outline" className="flex-1">
+                <Download className="w-4 h-4 mr-2" />
+                백업 내보내기
+              </Button>
+              <Button onClick={handlePickRestoreFile} variant="outline" className="flex-1">
+                <Upload className="w-4 h-4 mr-2" />
+                백업 복원
+              </Button>
+            </div>
+
+            {/* 복원 확인 (적용 시 현재 설정 덮어쓰기) */}
+            {pendingRestore && (
+              <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 text-yellow-600 shrink-0" />
+                  <div className="space-y-2 text-sm">
+                    <p className="text-yellow-800 dark:text-yellow-300">
+                      <span className="font-semibold">{restoreFileName}</span> 으로 복원하면 현재 설정이 모두 덮어쓰여집니다.
+                      복원 후 앱이 새로고침됩니다.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button onClick={handleConfirmRestore} size="sm">
+                        복원 적용
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setPendingRestore(null);
+                          setRestoreFileName('');
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {backupStatus && (
+              <p className="text-xs text-muted-foreground">{backupStatus}</p>
+            )}
           </div>
 
           {/* 버튼 */}

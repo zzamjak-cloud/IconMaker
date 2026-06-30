@@ -140,6 +140,15 @@ pub async fn save_icon_file(file_path: String, content: Vec<u8>) -> Result<(), S
     Ok(())
 }
 
+/// 지정한 절대 경로의 텍스트 파일을 읽어 문자열로 반환 (설정 백업 복원용)
+#[command]
+pub async fn read_text_file(file_path: String) -> Result<String, String> {
+    use std::fs;
+
+    fs::read_to_string(&file_path)
+        .map_err(|e| format!("파일 읽기 실패: {}", e))
+}
+
 /// SVG의 currentColor를 지정된 색상으로 변경
 ///
 /// # Arguments

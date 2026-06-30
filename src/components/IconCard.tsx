@@ -32,7 +32,8 @@ export function IconCard({ iconName, onClick }: IconCardProps) {
       className={cn(
         "relative border rounded-lg p-4 transition-all cursor-pointer",
         "hover:shadow-md hover:border-primary",
-        "bg-card text-card-foreground"
+        "bg-card text-card-foreground",
+        "h-full flex flex-col" // 셀 높이를 가득 채워 그리드 비율에 맞춰 스케일
       )}
     >
       {/* 즐겨찾기 버튼 */}
@@ -56,35 +57,32 @@ export function IconCard({ iconName, onClick }: IconCardProps) {
         />
       </button>
 
-      {/* 아이콘 표시 영역 */}
-      <div className="flex flex-col items-center gap-3">
-        {/* SVG 아이콘 */}
-        <div className="w-16 h-16 flex items-center justify-center">
-          {isLoading && (
-            <div className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin" />
-          )}
-          {error && (
-            <div className="text-xs text-destructive text-center">
-              로드 실패
-            </div>
-          )}
-          {svg && (
-            <div
-              className="w-full h-full flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
-          )}
-        </div>
+      {/* 아이콘 표시 영역 — flex-1로 셀 높이에 맞춰 가변 */}
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        {isLoading && (
+          <div className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin" />
+        )}
+        {error && (
+          <div className="text-xs text-destructive text-center">
+            로드 실패
+          </div>
+        )}
+        {svg && (
+          <div
+            className="w-full h-full flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        )}
+      </div>
 
-        {/* 아이콘 이름 */}
-        <div className="w-full text-center space-y-1">
-          <p className="text-sm font-medium truncate" title={name}>
-            {name}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {prefix}
-          </p>
-        </div>
+      {/* 아이콘 이름 */}
+      <div className="w-full text-center space-y-0.5 mt-2 shrink-0">
+        <p className="text-sm font-medium truncate" title={name}>
+          {name}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">
+          {prefix}
+        </p>
       </div>
     </div>
   );

@@ -26,3 +26,7 @@ dist-ssr
 # Tauri 서명 키 (절대 커밋 금지)
 src-tauri/*.key
 .claude
+
+# 로컬 도구 상태 (커밋 제외)
+.omc/
+.serena/

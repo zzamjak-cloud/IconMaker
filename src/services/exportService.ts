@@ -88,9 +88,18 @@ export class ExportService {
     options: Required<ExportOptions>,
     settings: any
   ): Promise<string | null> {
-    const extension = options.format;
-    const fileName = `${options.fileName}.${extension}`;
+    return this.resolveSavePath(`${options.fileName}.${options.format}`, options.format, settings);
+  }
 
+  /**
+   * 저장 위치 결정 공통 로직 (자동 저장 폴더 또는 저장 대화상자)
+   * @returns 결정된 경로, 취소 시 null
+   */
+  private async resolveSavePath(
+    fileName: string,
+    extension: string,
+    settings: any
+  ): Promise<string | null> {
     // 자동 저장 모드
     if (settings.autoSave && settings.defaultFolder) {
       return `${settings.defaultFolder}/${fileName}`;
@@ -106,6 +115,50 @@ export class ExportService {
         extensions: [extension],
       }],
     });
+  }
+
+  /**
+   * 텍스트 파일 저장 (SVG/HTML 스니펫 등)
+   * - 기존 SVG 내보내기와 동일한 저장 위치 정책(자동저장 폴더 또는 저장 대화상자) 재사용
+   * - 텍스트를 바이트로 변환해 save_icon_file Tauri command로 저장
+   * @returns 저장된 파일 경로, 취소 시 null
+   */
+  async saveTextFile(fileName: string, text: string, extension: string): Promise<string | null> {
+    const settings = await storageService.getExportSettings();
+
+    // 전달받은 fileName이 확장자를 포함하지 않으면 부여한다.
+    const fullFileName = fileName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)
+      ? fileName
+      : `${fileName}.${extension}`;
+
+    const filePath = await this.resolveSavePath(fullFileName, extension, settings);
+    if (!filePath) {
+      return null;
+    }
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    await invoke('save_icon_file', {
+      filePath,
+      content: Array.from(data),
+    });
+
+    return filePath;
+  }
+
+  /**
+   * SVG 콘텐츠를 PNG로 저장
+   * - 저장 위치 정책(자동저장 폴더 또는 저장 대화상자)은 기존 로직 재사용
+   * - Canvas로 래스터화하므로 SVG 필터(효과)가 그대로 PNG에 반영됨
+   * @returns 저장된 파일 경로, 취소 시 null
+   */
+  async saveSvgAsPng(fileName: string, svgContent: string, size: number): Promise<string | null> {
+    const settings = await storageService.getExportSettings();
+    const base = fileName.replace(/\.(svg|png)$/i, '');
+    const filePath = await this.resolveSavePath(`${base}.png`, 'png', settings);
+    if (!filePath) return null;
+    await this.savePngViaCanvas(filePath, this.normalizeSvgSize(svgContent), size, '');
+    return filePath;
   }
 
   /**

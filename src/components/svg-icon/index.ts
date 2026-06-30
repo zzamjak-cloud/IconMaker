@@ -1,0 +1,1 @@
+export { SvgIconPanel } from './SvgIconPanel';

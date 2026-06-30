@@ -25,6 +25,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             svg_to_png,
             save_icon_file,
+            read_text_file,
             change_svg_color,
             setup_default_folder,
         ])
