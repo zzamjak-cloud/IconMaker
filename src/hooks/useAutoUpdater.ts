@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { flushSvgWorkspaceSave } from '@/lib/svgIcon/svgWorkspaceSaver';
 
 interface UpdateProgress {
   downloaded: number;
@@ -109,6 +110,8 @@ export function useAutoUpdater() {
       });
 
       console.log('[Updater] 설치 완료, 재시작 준비');
+      // 재시작 전 대기 중인 SVG 워크스페이스 저장을 디스크에 강제 반영(업데이트 시 데이터 유실 방지)
+      await flushSvgWorkspaceSave();
       await relaunch();
     } catch (error) {
       console.error('[Updater] 다운로드/설치 실패:', error);

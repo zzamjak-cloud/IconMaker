@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-30
+
+### Fixed
+- 자동 업데이트로 재시작될 때 에디터 탭의 저장된 아이콘이 유실되던 문제 수정
+  - 재시작 직전 대기 중인 워크스페이스 저장을 디스크에 강제 반영(flush)
+  - 로드 실패 시 기존 데이터를 기본값으로 덮어쓰지 않도록 보호
+  - 화면 숨김/종료/탭 전환 시 즉시 저장
+
 ## [0.3.0] - 2026-06-30
 
 ### Added
@@ -71,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 설정 관리 (기본 폴더, 내보내기 옵션)
 - 다크 모드 지원
 
-[unreleased]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.1.1...v0.1.2
