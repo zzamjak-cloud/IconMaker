@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-30
+
+### Added
+- 검색 결과 페이지네이션 (이름 풀 조회 + 페이지 단위 SVG 로드, 이전/번호/다음)
+- 라이선스 안내 다이얼로그 및 헤더 "라이선스" 버튼 (컬렉션별 라이선스·통합 검색 주의)
+- 커스텀 색상 선택기를 효과(그림자/발광)·외곽선 색상에도 적용
+
+### Changed
+- 검색 표시 개수를 100개로 고정 (24/48/72 드롭다운 제거)
+- 검색 기본 소스를 "통합"으로 변경하고 목록 첫 항목으로 배치
+- 커스텀 색상 선택기 팝업을 화면 안에 들어오도록 위치 보정 (가림 현상 해결)
+- 내부 발광은 콘텐츠 기준(아웃라인 제외), 그림자/외부 발광은 아웃라인 포함
+
+### Removed
+- "저장 아이콘 필터" 입력 (불필요)
+- 검색 완료 토스트 알림 (UX 흔들림 제거)
+
 ## [0.2.0] - 2026-06-30
 
 ### Added
@@ -54,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 설정 관리 (기본 폴더, 내보내기 옵션)
 - 다크 모드 지원
 
-[unreleased]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/zzamjak-cloud/IconMaker/compare/v0.1.0...v0.1.1

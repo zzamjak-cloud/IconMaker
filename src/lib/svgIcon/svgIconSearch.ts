@@ -24,12 +24,12 @@ export interface SvgIconSourcePack {
 }
 
 export const SVG_ICON_SOURCE_PACKS: SvgIconSourcePack[] = [
+  { id: 'all', label: '통합', prefixes: undefined },
   { id: 'game', label: '게임', prefixes: ['game-icons'] },
   { id: 'ui', label: 'UI/HUD', prefixes: ['lucide', 'tabler', 'iconoir'] },
   { id: 'pixel', label: '픽셀', prefixes: ['pixelarticons'] },
   { id: 'material', label: '시스템', prefixes: ['mdi', 'material-symbols'] },
   { id: 'emoji', label: '이모지', prefixes: ['openmoji', 'noto'] },
-  { id: 'all', label: '통합', prefixes: undefined },
 ];
 
 const QUERY_EXPANSIONS: Array<{ pattern: RegExp; terms: string[] }> = [
@@ -193,6 +193,29 @@ function interleaveByCollection(iconNames: string[], stylePreset: SvgIconStylePr
     }
   }
   return interleaved;
+}
+
+// 아이콘 "이름" 풀만 조회한다(SVG는 받지 않음 → 가볍다). 페이지네이션용.
+export async function searchSvgIconNames(
+  query: string,
+  options: { stylePreset: SvgIconStylePreset; sourcePackIds: SvgIconSourcePackId[]; poolLimit?: number }
+): Promise<string[]> {
+  const poolLimit = options.poolLimit ?? 400;
+  const terms = expandSvgIconSearchQuery(query);
+  const sourcePacks = getSelectedSourcePacks(options.sourcePackIds);
+  const perSearchLimit = Math.max(32, Math.ceil(poolLimit / Math.max(sourcePacks.length, 1)));
+  const rawIconNames = (
+    await Promise.all(
+      sourcePacks.flatMap((pack) => terms.map((term) => fetchIconifySearch(term, perSearchLimit, pack.prefixes)))
+    )
+  ).flat();
+  return interleaveByCollection(rawIconNames, options.stylePreset).slice(0, poolLimit);
+}
+
+// 주어진 아이콘 이름들의 SVG를 가져온다(한 페이지 분량). 실패/위험 SVG는 제외.
+export async function fetchSvgIconsByNames(names: string[]): Promise<SvgIconSearchResult[]> {
+  const fetched = await mapWithConcurrency(names, ICONIFY_FETCH_CONCURRENCY, fetchIconSvg);
+  return fetched.filter((item): item is SvgIconSearchResult => Boolean(item));
 }
 
 export async function searchSvgIcons(

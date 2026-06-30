@@ -44,7 +44,8 @@ import {
   SVG_ICON_SOURCE_PACKS,
   SvgIconSourcePackId,
   expandSvgIconSearchQuery,
-  searchSvgIcons,
+  searchSvgIconNames,
+  fetchSvgIconsByNames,
 } from '@/lib/svgIcon/svgIconSearch';
 import {
   buildHtmlIconSnippet,
@@ -57,7 +58,7 @@ import { exportService } from '@/services/exportService';
 import { ColorSwatchPicker } from './ColorSwatchPicker';
 
 const CATEGORY_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#eab308', '#ec4899'];
-const SEARCH_LIMIT_OPTIONS = [24, 48, 72];
+const SEARCH_PAGE_SIZE = 100; // 검색 페이지당 표시 개수(고정)
 const OUTLINE_WIDTH_MAX = 64;
 const OUTLINE_WIDTH_PERCEIVED_RATIO = 4;
 // 색상 모드(원본/단색/투톤)와 마감(그레디언트/입체)을 하나로 통합한 스타일 종류.
@@ -124,16 +125,16 @@ export function SvgIconPanel() {
 
   const [newCategoryName, setNewCategoryName] = useState('');
   const [searchQuery, setSearchQuery] = useState(DEFAULT_SVG_ICON_SEARCH_QUERY);
-  const [searchLimit, setSearchLimit] = useState(48);
   const [searchResults, setSearchResults] = useState<SvgIconSearchResult[]>([]);
+  const [resultNames, setResultNames] = useState<string[]>([]); // 전체 검색 이름 풀(페이지네이션용)
+  const [searchPage, setSearchPage] = useState(0); // 0-based 현재 페이지
   const [selectedResultIds, setSelectedResultIds] = useState<Set<string>>(new Set());
   // 그리드 컬럼 수 — IconMaker 검색 뷰와 독립적으로 동작하는 패널 전용 상태
   const [gridColumns, setGridColumns] = useState(5);
   const [selectedSourcePackIds, setSelectedSourcePackIds] = useState<Set<SvgIconSourcePackId>>(
-    new Set(['game', 'ui', 'pixel'])
+    new Set(['all'])
   );
   const [savedSearchQuery, setSavedSearchQuery] = useState('');
-  const [savedIconQuery, setSavedIconQuery] = useState('');
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [pendingDeleteCategoryId, setPendingDeleteCategoryId] = useState<string | null>(null);
@@ -177,20 +178,10 @@ export function SvgIconPanel() {
   };
 
   const selectedCategoryIcons = useMemo(() => {
-    const query = savedIconQuery.trim().toLowerCase();
     return workspace.icons
       .filter((icon) => icon.categoryId === selectedCategoryId)
-      .filter((icon) => {
-        if (!query) return true;
-        return (
-          icon.name.toLowerCase().includes(query) ||
-          icon.prompt.toLowerCase().includes(query) ||
-          icon.tags.some((tag) => tag.toLowerCase().includes(query)) ||
-          icon.sourceName?.toLowerCase().includes(query)
-        );
-      })
       .sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)));
-  }, [savedIconQuery, selectedCategoryId, workspace.icons]);
+  }, [selectedCategoryId, workspace.icons]);
 
   const selectedResults = useMemo(
     () => searchResults.filter((result) => selectedResultIds.has(result.id)),
@@ -534,6 +525,18 @@ export function SvgIconPanel() {
     });
   };
 
+  // 페이지네이션: 전체 페이지 수
+  const totalPages = Math.max(1, Math.ceil(resultNames.length / SEARCH_PAGE_SIZE));
+
+  // 특정 페이지의 SVG를 로드해 표시
+  const loadSearchPage = async (names: string[], page: number, pageSize: number) => {
+    const slice = names.slice(page * pageSize, (page + 1) * pageSize);
+    const results = await fetchSvgIconsByNames(slice);
+    setSearchResults(results);
+    setSearchPage(page);
+    setSelectedResultIds(new Set());
+  };
+
   const handleSearchIcons = async () => {
     const query = searchQuery.trim();
     if (!query) {
@@ -544,17 +547,38 @@ export function SvgIconPanel() {
     setError(null);
     setIsSearching(true);
     try {
-      const results = await searchSvgIcons(query, {
-        limit: searchLimit,
+      // 1) 이름 풀 조회(가벼움) → 2) 첫 페이지 SVG 로드
+      const names = await searchSvgIconNames(query, {
         stylePreset: workspace.stylePreset,
         sourcePackIds: Array.from(selectedSourcePackIds),
+        poolLimit: 600,
       });
-      setSearchResults(results);
-      setSelectedResultIds(new Set());
+      setResultNames(names);
       setSavedSearchQuery(query);
-      setToast(`${results.length}개 아이콘 검색됨`);
+      if (names.length === 0) {
+        setSearchResults([]);
+        setSearchPage(0);
+        setSelectedResultIds(new Set());
+        setToast('검색 결과가 없습니다.');
+        return;
+      }
+      await loadSearchPage(names, 0, SEARCH_PAGE_SIZE);
     } catch (searchError) {
       setError(searchError instanceof Error ? searchError.message : '아이콘 검색에 실패했습니다.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 페이지 이동
+  const handleGoToPage = async (page: number) => {
+    if (page < 0 || page >= totalPages || page === searchPage) return;
+    setError(null);
+    setIsSearching(true);
+    try {
+      await loadSearchPage(resultNames, page, SEARCH_PAGE_SIZE);
+    } catch (pageError) {
+      setError(pageError instanceof Error ? pageError.message : '페이지 로드에 실패했습니다.');
     } finally {
       setIsSearching(false);
     }
@@ -842,17 +866,6 @@ export function SvgIconPanel() {
                 className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-lime-500"
               />
             </div>
-            <select
-              value={searchLimit}
-              onChange={(event) => setSearchLimit(Number(event.target.value))}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-lime-500"
-            >
-              {SEARCH_LIMIT_OPTIONS.map((limit) => (
-                <option key={limit} value={limit}>
-                  {limit}개
-                </option>
-              ))}
-            </select>
             <button
               onClick={handleSearchIcons}
               disabled={isSearching}
@@ -939,12 +952,6 @@ export function SvgIconPanel() {
               >
                 선택 {selectedResults.length}개 저장
               </button>
-              <input
-                value={savedIconQuery}
-                onChange={(event) => setSavedIconQuery(event.target.value)}
-                placeholder="저장 아이콘 필터"
-                className="w-44 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-lime-500"
-              />
             </div>
           </div>
 
@@ -1029,6 +1036,52 @@ export function SvgIconPanel() {
                   );
                 })}
               </div>
+              {/* 페이지네이션: 이전 · 페이지 번호(생략 포함) · 다음 */}
+              {totalPages > 1 && (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-1 text-xs">
+                  <button
+                    onClick={() => handleGoToPage(searchPage - 1)}
+                    disabled={searchPage === 0 || isSearching}
+                    className="rounded-md border border-slate-200 px-2 py-1 font-semibold text-slate-600 disabled:opacity-40"
+                  >
+                    이전
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i)
+                    .filter((i) => i === 0 || i === totalPages - 1 || Math.abs(i - searchPage) <= 2)
+                    .reduce<number[]>((acc, i) => {
+                      if (acc.length && i - acc[acc.length - 1] > 1) acc.push(-1);
+                      acc.push(i);
+                      return acc;
+                    }, [])
+                    .map((i, idx) =>
+                      i === -1 ? (
+                        <span key={`gap-${idx}`} className="px-1 text-slate-400">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={i}
+                          onClick={() => handleGoToPage(i)}
+                          disabled={isSearching}
+                          className={`min-w-[28px] rounded-md border px-2 py-1 font-semibold ${
+                            i === searchPage
+                              ? 'border-slate-900 bg-slate-900 text-white'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      )
+                    )}
+                  <button
+                    onClick={() => handleGoToPage(searchPage + 1)}
+                    disabled={searchPage >= totalPages - 1 || isSearching}
+                    className="rounded-md border border-slate-200 px-2 py-1 font-semibold text-slate-600 disabled:opacity-40"
+                  >
+                    다음
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

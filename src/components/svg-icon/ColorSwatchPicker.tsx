@@ -33,6 +33,10 @@ const SHADES = [
 const GRAYS = Array.from({ length: 12 }, (_, i) => hslToHex(0, 0, Math.round((i / 11) * 100)));
 const PALETTE = [...GRAYS, ...SHADES.flatMap((shade) => HUES.map((h) => hslToHex(h, shade.s, shade.l)))];
 
+const POPUP_WIDTH = 336;
+const POPUP_EST_HEIGHT = 320;
+const VIEWPORT_MARGIN = 8;
+
 interface ColorSwatchPickerProps {
   value: string;
   onChange: (color: string) => void;
@@ -43,14 +47,36 @@ interface ColorSwatchPickerProps {
 
 export function ColorSwatchPicker({ value, onChange, label, className, disabled }: ColorSwatchPickerProps) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // 트리거 위치 기준으로 화면 안에 들어오도록 팝업 좌표 계산(아래 공간 부족 시 위로 띄움)
+  const computePosition = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const left = Math.min(Math.max(VIEWPORT_MARGIN, rect.left), window.innerWidth - POPUP_WIDTH - VIEWPORT_MARGIN);
+    let top = rect.bottom + 4;
+    if (top + POPUP_EST_HEIGHT > window.innerHeight - VIEWPORT_MARGIN) {
+      const above = rect.top - POPUP_EST_HEIGHT - 4;
+      top = above >= VIEWPORT_MARGIN ? above : Math.max(VIEWPORT_MARGIN, window.innerHeight - POPUP_EST_HEIGHT - VIEWPORT_MARGIN);
+    }
+    setPos({ left, top });
+  };
+
+  const toggle = () => {
+    if (disabled) return;
+    if (!open) computePosition();
+    setOpen((o) => !o);
+  };
 
   // 비활성화되면 팝업을 닫는다
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
 
-  // 바깥 클릭 / ESC 닫기
+  // 바깥 클릭 / ESC / 스크롤·리사이즈 시 닫기
   useEffect(() => {
     if (!open) return;
     const onDown = (event: MouseEvent) => {
@@ -59,28 +85,37 @@ export function ColorSwatchPicker({ value, onChange, label, className, disabled 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
+    const onScroll = () => setOpen(false);
     window.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
     return () => {
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
     };
   }, [open]);
 
   return (
     <div ref={ref} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         title={label}
         className={`rounded-md border border-slate-200 ${className ?? 'h-12 w-full'} ${
           disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
         }`}
         style={{ backgroundColor: value }}
       />
-      {open && (
-        <div className="absolute left-0 z-50 mt-1 w-[336px] max-w-[80vw] rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+      {open && pos && (
+        <div
+          style={{ position: 'fixed', left: pos.left, top: pos.top, width: POPUP_WIDTH }}
+          className="z-50 max-h-[calc(100vh-16px)] max-w-[calc(100vw-16px)] overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
+        >
           <div className="grid grid-cols-12 gap-1">
             {PALETTE.map((color, index) => (
               <button

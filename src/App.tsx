@@ -5,6 +5,7 @@ import { IconGrid } from '@/components/IconGrid';
 import { ExportPanel } from '@/components/ExportPanel';
 import { BatchExportDialog } from '@/components/BatchExportDialog';
 import { SettingsButton } from '@/components/SettingsDialog';
+import { LicenseButton } from '@/components/LicenseDialog';
 import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { ToastProvider } from '@/components/ui/toast';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -161,6 +162,7 @@ function AppContent() {
               </>
             )}
 
+            <LicenseButton />
             <SettingsButton />
             </div>
           </div>
